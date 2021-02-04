@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "allowJs": false,
+    "allowJs": true,
     "outDir": "dist",
     "module": "esnext",
     "lib": ["dom", "esnext"],

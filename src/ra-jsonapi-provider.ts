@@ -1,5 +1,7 @@
-import { stringify } from 'query-string'
-import { fetchUtils, DataProvider } from 'react-admin'
+import { stringify } from 'query-string';
+import { fetchUtils, DataProvider } from 'react-admin';
+import merge from 'deepmerge';
+import defaultSettings from './default-settings';
 
 /**
  * https://github.com/marmelab/react-admin/blob/master/packages/ra-data-simple-rest/src/index.ts
@@ -37,14 +39,24 @@ import { fetchUtils, DataProvider } from 'react-admin'
  * );
  *
  * export default App;
+ * export default (apiUrl, userSettings = {}) => (type, resource, params) => {
+  let url = '';
+  const settings = merge(defaultSettings, userSettings);
+
+  const options = {
+    headers: settings.headers,
+  };
  */
 export default (
   apiUrl: string,
+  userSettings = {},
   httpClient = fetchUtils.fetchJson,
   countHeader: string = 'Content-Range'
-): DataProvider => ({
-  getList: (resource, params) => {
-    const { page, perPage } = params.pagination
+): DataProvider => {
+  const settings = merge(defaultSettings, userSettings);
+  return {
+    getList: (resource, params) => {
+      /* const { page, perPage } = params.pagination
     const { field, order } = params.sort
 
     const rangeStart = (page - 1) * perPage
@@ -64,130 +76,157 @@ export default (
               Range: `${resource}=${rangeStart}-${rangeEnd}`
             })
           }
-        : {}
+        : {} */
 
-    return httpClient(url, options).then(({ headers, json }) => {
-      if (!headers.has(countHeader)) {
-        throw new Error(
-          `The ${countHeader} header is missing in the HTTP Response. The simple REST data provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare ${countHeader} in the Access-Control-Expose-Headers header?`
-        )
+      const { page, perPage } = params.pagination;
+
+      // Create query with pagination params.
+      const query = {
+        'page[number]': page,
+        'page[size]': perPage,
+        'page[offset]': page * perPage,
+        'page[limit]': perPage,
+        sort: ' '
+      };
+
+      // Add all filter params to query.
+      Object.keys(params.filter || {}).forEach((key) => {
+        query[`filter[${key}]`] = params.filter[key];
+      });
+
+      // Add sort parameter
+      if (params.sort && params.sort.field) {
+        const prefix = params.sort.order === 'ASC' ? '' : '-';
+        query.sort = `${prefix}${params.sort.field}`;
       }
-      return {
-        data: json,
-        total:
-          countHeader === 'Content-Range'
-            ? parseInt(
-                headers.get('content-range') ?? ''.split('/').pop() ?? '0',
-                10
-              )
-            : parseInt(headers.get(countHeader.toLowerCase()) ?? '0')
-      }
-    })
-  },
 
-  getOne: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
-      data: json
-    })),
+      const url = `${apiUrl}/${resource}?${stringify(query)}`;
 
-  getMany: (resource, params) => {
-    const query = {
-      filter: JSON.stringify({ id: params.ids })
-    }
-    const url = `${apiUrl}/${resource}?${stringify(query)}`
-    return httpClient(url).then(({ json }) => ({ data: json }))
-  },
+      return httpClient(url).then(({ json }) => {
+        // When meta data and the 'total' setting is provided try
+        // to get the total count.
+        let total = 0;
+        if (json.meta && settings.total) {
+          total = json.meta[settings.total];
+        }
+        // Use the length of the data array as a fallback.
+        total = total || json.data.length; //  { id: any; attributes: any; }
+        const jsonData = json.data.map((value: any) =>
+          Object.assign({ id: value.id }, value.attributes)
+        );
 
-  getManyReference: (resource, params) => {
-    const { page, perPage } = params.pagination
-    const { field, order } = params.sort
+        return {
+          data: jsonData,
+          total: total
+        };
+      });
+    },
 
-    const rangeStart = (page - 1) * perPage
-    const rangeEnd = page * perPage - 1
+    getOne: (resource, params) =>
+      httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
+        data: json
+      })),
 
-    const query = {
-      sort: JSON.stringify([field, order]),
-      range: JSON.stringify([(page - 1) * perPage, page * perPage - 1]),
-      filter: JSON.stringify({
-        ...params.filter,
-        [params.target]: params.id
-      })
-    }
-    const url = `${apiUrl}/${resource}?${stringify(query)}`
-    const options =
-      countHeader === 'Content-Range'
-        ? {
-            // Chrome doesn't return `Content-Range` header if no `Range` is provided in the request.
-            headers: new Headers({
-              Range: `${resource}=${rangeStart}-${rangeEnd}`
-            })
-          }
-        : {}
+    getMany: (resource, params) => {
+      const query = {
+        filter: JSON.stringify({ id: params.ids })
+      };
+      const url = `${apiUrl}/${resource}?${stringify(query)}`;
+      return httpClient(url).then(({ json }) => ({ data: json }));
+    },
 
-    return httpClient(url, options).then(({ headers, json }) => {
-      if (!headers.has(countHeader)) {
-        throw new Error(
-          `The ${countHeader} header is missing in the HTTP Response. The simple REST data provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare ${countHeader} in the Access-Control-Expose-Headers header?`
-        )
-      }
-      return {
-        data: json,
-        total:
-          countHeader === 'Content-Range'
-            ? parseInt(
-                headers.get('content-range') ?? ''.split('/').pop() ?? '10',
-                10
-              )
-            : parseInt(headers.get(countHeader.toLowerCase()) ?? '0')
-      }
-    })
-  },
+    getManyReference: (resource, params) => {
+      const { page, perPage } = params.pagination;
+      const { field, order } = params.sort;
 
-  update: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/${params.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(params.data)
-    }).then(({ json }) => ({ data: json })),
+      // const rangeStart = (page - 1) * perPage;
+      // const rangeEnd = page * perPage - 1;
 
-  // simple-rest doesn't handle provide an updateMany route, so we fallback to calling update n times instead
-  updateMany: (resource, params) =>
-    Promise.all(
-      params.ids.map((id) =>
-        httpClient(`${apiUrl}/${resource}/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(params.data)
+      const query = {
+        sort: JSON.stringify([field, order]),
+        range: JSON.stringify([(page - 1) * perPage, page * perPage - 1]),
+        filter: JSON.stringify({
+          ...params.filter,
+          [params.target]: params.id
         })
-      )
-    ).then((responses) => ({ data: responses.map(({ json }) => json.id) })),
+      };
+      const url = `${apiUrl}/${resource}?${stringify(query)}`;
+      const options = {};
+      /* countHeader === 'Content-Range'
+          ? {
+              // Chrome doesn't return `Content-Range` header if no `Range` is provided in the request.
+              headers: new Headers({
+                Range: `${resource}=${rangeStart}-${rangeEnd}`
+              })
+            }
+          : {} */
 
-  create: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}`, {
-      method: 'POST',
-      body: JSON.stringify(params.data)
-    }).then(({ json }) => ({
-      data: { ...params.data, id: json.id }
-    })),
+      return httpClient(url, options).then(({ headers, json }) => {
+        if (!headers.has(countHeader)) {
+          throw new Error(
+            `The ${countHeader} header is missing in the HTTP Response. The simple REST data provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare ${countHeader} in the Access-Control-Expose-Headers header?`
+          );
+        }
+        return {
+          data: json,
+          total: 100
+          /*  countHeader === 'Content-Range'
+              ? parseInt(
+                  headers.get('content-range') ?? ''.split('/').pop() ?? '10',
+                  10
+                )
+              : parseInt(headers.get(countHeader.toLowerCase()) ?? '0')
+        }; */
+        };
+      });
+    },
 
-  delete: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/${params.id}`, {
-      method: 'DELETE',
-      headers: new Headers({
-        'Content-Type': 'text/plain'
-      })
-    }).then(({ json }) => ({ data: json })),
+    update: (resource, params) =>
+      httpClient(`${apiUrl}/${resource}/${params.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(params.data)
+      }).then(({ json }) => ({ data: json })),
 
-  // simple-rest doesn't handle filters on DELETE route, so we fallback to calling DELETE n times instead
-  deleteMany: (resource, params) =>
-    Promise.all(
-      params.ids.map((id) =>
-        httpClient(`${apiUrl}/${resource}/${id}`, {
-          method: 'DELETE',
-          headers: new Headers({
-            'Content-Type': 'text/plain'
+    // simple-rest doesn't handle provide an updateMany route, so we fallback to calling update n times instead
+    updateMany: (resource, params) =>
+      Promise.all(
+        params.ids.map((id) =>
+          httpClient(`${apiUrl}/${resource}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(params.data)
           })
+        )
+      ).then((responses) => ({ data: responses.map(({ json }) => json.id) })),
+
+    create: (resource, params) =>
+      httpClient(`${apiUrl}/${resource}`, {
+        method: 'POST',
+        body: JSON.stringify(params.data)
+      }).then(({ json }) => ({
+        data: { ...params.data, id: json.id }
+      })),
+
+    delete: (resource, params) =>
+      httpClient(`${apiUrl}/${resource}/${params.id}`, {
+        method: 'DELETE',
+        headers: new Headers({
+          'Content-Type': 'text/plain'
         })
-      )
-    ).then((responses) => ({
-      data: responses.map(({ json }) => json.id)
-    }))
-})
+      }).then(({ json }) => ({ data: json })),
+
+    // simple-rest doesn't handle filters on DELETE route, so we fallback to calling DELETE n times instead
+    deleteMany: (resource, params) =>
+      Promise.all(
+        params.ids.map((id) =>
+          httpClient(`${apiUrl}/${resource}/${id}`, {
+            method: 'DELETE',
+            headers: new Headers({
+              'Content-Type': 'text/plain'
+            })
+          })
+        )
+      ).then((responses) => ({
+        data: responses.map(({ json }) => json.id)
+      }))
+  };
+};
