@@ -123,7 +123,7 @@ the settings:
 {
   // Set the update method from PATCH to PUT.
   updateMethod: 'PUT',
-  // Set the Total Property
+  // Set the
   total: 'count'
 }
 ```
