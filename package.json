@@ -1,7 +1,7 @@
 {
   "name": "rav3-jsonapi-client",
   "version": "1.0.0",
-  "description": "JSON API data provider for react-admin, V3 Style, Support for SAFRS",
+  "description": "JSON API data provider for react-admin, V3 Style, Support for SAFRS, ApiLogicServer",
   "author": "agoe",
   "license": "MIT",
   "repository": "agoe/rav3-jsonapi-client",

@@ -17,7 +17,7 @@ A JSONAPI compatible data provider for
 
 Supports:
 [SAFRS](https://github.com/thomaxxl/safrs)
-[ApiLOgicServer]https://github.com/valhuber/ApiLogicServer)
+[ApiLOgicServer](https://github.com/valhuber/ApiLogicServer)
 
 
 ## Features
@@ -106,7 +106,7 @@ const settings = {
 }
 ```
 The default value is:
-``` javascript
+``` javascriptgit branch -M main
 {
   Accept: 'application/vnd.api+json; charset=utf-8',
   'Content-Type': 'application/vnd.api+json; charset=utf-8',
