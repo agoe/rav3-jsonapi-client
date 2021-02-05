@@ -2,13 +2,17 @@
 
 > JSON API data provider for react-admin, V3 Style, Support for SAFRS and ApiLogicServer
 
-[![NPM](https://img.shields.io/npm/v/rav3-jsonapi-client.svg)](https://www.npmjs.com/package/rav3-jsonapi-client) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+[![NPM](https://img.shields.io/npm/v/rav3-jsonapi-client.svg)](https://github.com/agoe/rav3-jsonapi-client/packages/607376) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 this a fork from henvo/ra-jsonapi-client
 ## Install
+rav3-jsonapi-client  package  is hosted at github
 
+place a .npmrc file in your projects root directory with one line:
+@agoe:registry=https://npm.pkg.github.com 
 ```bash
-npm install --save rav3-jsonapi-client
+npm install  @agoe/rav3-jsonapi-client  --registry=https://npm.pkg.github.com
+yarn add agoe/rav3-jsonapi-client --npmRegistryServer https://npm.pkg.github.com
 ```
 
 ## Usage
