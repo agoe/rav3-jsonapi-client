@@ -2,14 +2,13 @@
 
 > JSON API data provider for react-admin, V3 Style, Support for SAFRS and ApiLogicServer
 
-[![NPM](https://img.shields.io/npm/v/rav3-jsonapi-client.svg)](https://github.com/agoe/rav3-jsonapi-client/packages/607376) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+npm package hosted at [GitHub Package Registry](https://github.com/features/package-registry)
+<!--
+[![NPM](https://img.shields.io/npm/v/rav3-jsonapi-client.svg)](https://github.com/agoe/rav3-jsonapi-client/packages/607376) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) -->
 
 this a fork from henvo/ra-jsonapi-client
 ## Install
-rav3-jsonapi-client  package  is hosted at github
 
-place a .npmrc file in your projects root directory with one line:
-@agoe:registry=https://npm.pkg.github.com 
 ```bash
 npm install  @agoe/rav3-jsonapi-client  --registry=https://npm.pkg.github.com
 yarn add agoe/rav3-jsonapi-client --npmRegistryServer https://npm.pkg.github.com
@@ -35,16 +34,7 @@ Currently these actions will be supported:
 * `GET_MANY`
 * `GET_MANY_REFERENCE`
 
-In this Alpa version only GET_LIST is supported
-## Installation
-
-```sh
-# via npm
-npm install ra-jsonapi-client
-
-# via yarn
-yarn add ra-jsonapi-client
-```
+In this Alpha version only GET_LIST is supported
 
 ## Usage
 
@@ -55,7 +45,7 @@ react-admin.
 //in app.js
 import React from "react";
 import { Admin, Resource } from "react-admin";
-import jsonapiClient from "ra-jsonapi-client";
+import jsonapiClient from "rav3-jsonapi-client";
 
 const dataProvider = jsonapiClient('http://localhost:3000');
 
@@ -134,4 +124,4 @@ the settings:
 
 ## License
 
-MIT © [agoe](https://github.com/agoe)
+MIT © [Achim Götz agoe](https://github.com/agoe)
