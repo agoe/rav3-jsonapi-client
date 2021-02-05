@@ -21,7 +21,7 @@ A JSONAPI compatible data provider for
 
 Supports:
 [SAFRS](https://github.com/thomaxxl/safrs)
-[ApiLOgicServer](https://github.com/valhuber/ApiLogicServer)
+[ApiLogicServer](https://github.com/valhuber/ApiLogicServer)
 
 
 ## Features
