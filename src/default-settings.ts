@@ -1,3 +1,5 @@
+import { safrsErrorHandler } from './errors';
+
 export default {
   total: 'total',
   headers: {
@@ -5,10 +7,8 @@ export default {
     'Content-Type': 'application/vnd.api+json; charset=utf-8'
   },
   updateMethod: 'PATCH',
-  arrayFormat: 'brackets'
+  arrayFormat: 'brackets',
+  errorHandler: safrsErrorHandler
 };
 
-export const sum = (x: number, y: number): any => {
-  x = x + 1;
-  return { x: x, y: y, z: x + y };
-};
+

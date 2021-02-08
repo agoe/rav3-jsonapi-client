@@ -1,5 +1,5 @@
 import { stringify } from 'query-string';
-import { fetchUtils, DataProvider } from 'react-admin';
+import { fetchUtils, DataProvider, HttpError } from 'react-admin';
 import merge from 'deepmerge';
 import defaultSettings from './default-settings';
 
@@ -122,11 +122,17 @@ export default (
       });
     },
 
-    getOne: (resource, params) =>
+    /* getOne: (resource, params) =>
       httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
-        data: json
-      })),
+        data: json.data
+      })), */
 
+    getOne: (resource: any, params: { id: any }) => {
+      const url = `${apiUrl}/${resource}/${params.id}`;
+      return httpClient(url).then(({ json }) => {
+        return { data: json.data };
+      });
+    },
     getMany: (resource, params) => {
       const query = {
         filter: JSON.stringify({ id: params.ids })
@@ -183,9 +189,29 @@ export default (
 
     update: (resource, params) =>
       httpClient(`${apiUrl}/${resource}/${params.id}`, {
-        method: 'PUT',
+        method: settings.updateMethod,
         body: JSON.stringify(params.data)
-      }).then(({ json }) => ({ data: json })),
+      })
+        .then(({ json }) => {
+          const attributes = json.data;
+          delete attributes.id;
+
+          const updateData: any = {
+            /* any too keep compiler happy */
+            data: {
+              id: params.id,
+              type: resource,
+              attributes: attributes
+            }
+          };
+          // return { data: json };
+          return { data: updateData };
+        })
+        .catch((err: HttpError) => {
+          console.log('catch Error', err.body);
+          const errorHandler = settings.errorHandler;
+          return Promise.reject(errorHandler(err));
+        }),
 
     // simple-rest doesn't handle provide an updateMany route, so we fallback to calling update n times instead
     updateMany: (resource, params) =>
