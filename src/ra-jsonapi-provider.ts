@@ -130,15 +130,41 @@ export default (
     getOne: (resource: any, params: { id: any }) => {
       const url = `${apiUrl}/${resource}/${params.id}`;
       return httpClient(url).then(({ json }) => {
-        return { data: json.data };
+        const { id, attributes } = json.data;
+        return {
+          data: {
+            id,
+            ...attributes
+          }
+        };
       });
     },
+
     getMany: (resource, params) => {
-      const query = {
+      /* const query = {
         filter: JSON.stringify({ id: params.ids })
-      };
-      const url = `${apiUrl}/${resource}?${stringify(query)}`;
-      return httpClient(url).then(({ json }) => ({ data: json }));
+      }; */
+      const query = 'filter[id]=' + JSON.stringify(params.ids);
+      // const url = `${apiUrl}/${resource}?${stringify(query)}`;
+      const url = `${apiUrl}/${resource}?${query}`;
+      return httpClient(url).then(({ json }) => {
+        // When meta data and the 'total' setting is provided try
+        // to get the total count.
+        let total = 0;
+        if (json.meta && settings.total) {
+          total = json.meta[settings.total];
+        }
+        // Use the length of the data array as a fallback.
+        total = total || json.data.length; //  { id: any; attributes: any; }
+        const jsonData = json.data.map((value: any) =>
+          Object.assign({ id: value.id }, value.attributes)
+        );
+
+        return {
+          data: jsonData,
+          total: total
+        };
+      });
     },
 
     getManyReference: (resource, params) => {
@@ -187,31 +213,51 @@ export default (
       });
     },
 
-    update: (resource, params) =>
-      httpClient(`${apiUrl}/${resource}/${params.id}`, {
+    update: (resource, params) => {
+      let type = resource;
+      const arr = settings.endpointToTypeStripLastLetters;
+      for (const i in arr) {
+        if (resource.endsWith(arr[i])) {
+          type = resource.slice(0, arr[i].length * -1);
+          break; // quit after first hit
+        }
+      }
+      const data = {
+        data: {
+          id: params.id,
+          type: type,
+          attributes: params.data
+        }
+      };
+      return httpClient(`${apiUrl}/${resource}/${params.id}`, {
         method: settings.updateMethod,
-        body: JSON.stringify(params.data)
+        body: JSON.stringify(data)
       })
         .then(({ json }) => {
-          const attributes = json.data;
-          delete attributes.id;
-
+          const { id, attributes } = json.data;
+          /* const attributes = json.data;
+           delete attributes.id;
           const updateData: any = {
-            /* any too keep compiler happy */
-            data: {
+            any too keep compiler happy 
+           data: {
               id: params.id,
               type: resource,
               attributes: attributes
             }
+          }; */
+          return {
+            data: {
+              id,
+              ...attributes
+            }
           };
-          // return { data: json };
-          return { data: updateData };
         })
         .catch((err: HttpError) => {
           console.log('catch Error', err.body);
           const errorHandler = settings.errorHandler;
           return Promise.reject(errorHandler(err));
-        }),
+        });
+    },
 
     // simple-rest doesn't handle provide an updateMany route, so we fallback to calling update n times instead
     updateMany: (resource, params) =>

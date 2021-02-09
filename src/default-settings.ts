@@ -8,7 +8,8 @@ export default {
   },
   updateMethod: 'PATCH',
   arrayFormat: 'brackets',
-  errorHandler: safrsErrorHandler
+  errorHandler: safrsErrorHandler,
+  endpointToTypeStripLastLetters: ['Model', 's'] // update/create type: UserModel -> User, Users -> s
 };
 
 
