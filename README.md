@@ -27,14 +27,13 @@ Supports:
 Currently these actions will be supported:
 
 * `GET_LIST` 
-* `GET_ONE`
-* `CREATE`
+* `GET_ONE` 
+* `CREATE` todo
 * `UPDATE`
-* `DELETE`
+* `DELETE` tod
 * `GET_MANY`
-* `GET_MANY_REFERENCE`
+* `GET_MANY_REFERENCE` todo
 
-In this Alpha version only GET_LIST is supported
 
 ## Usage
 
