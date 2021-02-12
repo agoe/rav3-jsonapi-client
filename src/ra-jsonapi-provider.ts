@@ -270,13 +270,48 @@ export default (
         )
       ).then((responses) => ({ data: responses.map(({ json }) => json.id) })),
 
-    create: (resource, params) =>
+    /* create_old: (resource, params) =>
       httpClient(`${apiUrl}/${resource}`, {
         method: 'POST',
         body: JSON.stringify(params.data)
       }).then(({ json }) => ({
         data: { ...params.data, id: json.id }
-      })),
+      })), */
+
+    create: (resource, params) => {
+      let type = resource;
+      const arr = settings.endpointToTypeStripLastLetters;
+      for (const i in arr) {
+        if (resource.endsWith(arr[i])) {
+          type = resource.slice(0, arr[i].length * -1);
+          break; // quit after first hit
+        }
+      }
+      const data = {
+        data: {
+          type: type,
+          attributes: params.data
+        }
+      };
+      return httpClient(`${apiUrl}/${resource}`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+        .then(({ json }) => {
+          const { id, attributes } = json.data;
+          return {
+            data: {
+              id,
+              ...attributes
+            }
+          };
+        })
+        .catch((err: HttpError) => {
+          console.log('catch Error', err.body);
+          const errorHandler = settings.errorHandler;
+          return Promise.reject(errorHandler(err));
+        });
+    },
 
     delete: (resource, params) =>
       httpClient(`${apiUrl}/${resource}/${params.id}`, {

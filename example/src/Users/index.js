@@ -4,8 +4,7 @@ import {
   SimpleForm,
   TextInput,
   Edit,
-  required,
-  Error
+  required
 } from 'react-admin';
 const validateRequired = required();
 export const UserCreate = props => (
@@ -13,7 +12,6 @@ export const UserCreate = props => (
     <SimpleForm redirect="show">
       <TextInput source="name" validate={validateRequired} />
       <TextInput source="email"  /> 
-      <Error/>
     </SimpleForm>
   </Create>
 );

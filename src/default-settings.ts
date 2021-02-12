@@ -11,5 +11,3 @@ export default {
   errorHandler: safrsErrorHandler,
   endpointToTypeStripLastLetters: ['Model', 's'] // update/create type: UserModel -> User, Users -> s
 };
-
-
