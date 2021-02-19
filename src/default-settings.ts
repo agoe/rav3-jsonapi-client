@@ -1,6 +1,7 @@
-import { safrsErrorHandler } from './errors';
+import { safrsErrorHandler, HttpErrorHandler } from './errors';
+import { includeRelations } from './ra-jsonapi-provider';
 
-export default {
+export const defaultSettings: settings = {
   total: 'total',
   headers: {
     Accept: 'application/vnd.api+json; charset=utf-8',
@@ -8,6 +9,17 @@ export default {
   },
   updateMethod: 'PATCH',
   arrayFormat: 'brackets',
+  includeRelations: [],
   errorHandler: safrsErrorHandler,
-  endpointToTypeStripLastLetters: ['Model', 's'] // update/create type: UserModel -> User, Users -> s
+  endpointToTypeStripLastLetters: ['Model', 's'] // update/create type: UserModel -> User, Users -> User
 };
+
+interface settings {
+  total: string;
+  headers: {};
+  updateMethod: string;
+  arrayFormat: string;
+  includeRelations: includeRelations[];
+  errorHandler: HttpErrorHandler;
+  endpointToTypeStripLastLetters?: string[];
+}

@@ -1,7 +1,8 @@
 import { stringify } from 'query-string';
 import { fetchUtils, DataProvider, HttpError } from 'react-admin';
 import merge from 'deepmerge';
-import defaultSettings from './default-settings';
+import { defaultSettings } from './default-settings';
+import ResourceLookup from './resourceLookup';
 
 /**
  * https://github.com/marmelab/react-admin/blob/master/packages/ra-data-simple-rest/src/index.ts
@@ -47,7 +48,7 @@ import defaultSettings from './default-settings';
     headers: settings.headers,
   };
  */
-export default (
+export const jsonapiClient = (
   apiUrl: string,
   userSettings = {},
   httpClient = fetchUtils.fetchJson,
@@ -84,7 +85,7 @@ export default (
       const query = {
         'page[number]': page,
         'page[size]': perPage,
-        'page[offset]': page * perPage,
+        'page[offset]': (page - 1) * perPage,
         'page[limit]': perPage,
         sort: ' '
       };
@@ -99,27 +100,68 @@ export default (
         const prefix = params.sort.order === 'ASC' ? '' : '-';
         query.sort = `${prefix}${params.sort.field}`;
       }
+      const includes: string[] = [];
+      /* if (resource === 'Addresses') {
+        query[`include`] = 'users';
+        includes.push('users');
+      } else if (resource === 'Users') {
+        query[`include`] = 'addresses,companys';
+        includes.push('addresses');
+        includes.push('companys');
+      } */
+
+      const includeRelations: includeRelations[] = settings.includeRelations;
+      /* [
+        { resource: 'Users', includes: ['addresses', 'companys'] },
+        { resource: 'Addresses', includes: ['users'] }
+      ]; */
+
+      for (const ir of includeRelations) {
+        if (resource === ir.resource) {
+          query['include'] = ir.includes.join(',');
+          for (const include of ir.includes) {
+            includes.push(include);
+          }
+          break;
+        }
+      }
 
       const url = `${apiUrl}/${resource}?${stringify(query)}`;
 
-      return httpClient(url).then(({ json }) => {
-        // When meta data and the 'total' setting is provided try
-        // to get the total count.
-        let total = 0;
-        if (json.meta && settings.total) {
-          total = json.meta[settings.total];
-        }
-        // Use the length of the data array as a fallback.
-        total = total || json.data.length; //  { id: any; attributes: any; }
-        const jsonData = json.data.map((value: any) =>
-          Object.assign({ id: value.id }, value.attributes)
-        );
+      return httpClient(url)
+        .then(({ json }) => {
+          // const lookup = new ResourceLookup(json.data);
+          // When meta data and the 'total' setting is provided try
+          // to get the total count.
+          let total = 0;
+          if (json.meta && settings.total) {
+            total = json.meta[settings.total];
+          }
+          // Use the length of the data array as a fallback.
+          total = total || json.data.length; //  { id: any; attributes: any; }
+          const lookup = new ResourceLookup(json);
+          const jsonData = json.data.map((resource: any) =>
+            lookup.unwrapData(resource, includes)
+          );
+          /* const jsonData = json.data.map((value: any) => {
+          const relAttributeKey = Object.keys(value)[0];
+          return Object.assign(
+            { id: value.id },
+            value.attributes,
+            value[relAttributeKey]
+          );
+        }); */
 
-        return {
-          data: jsonData,
-          total: total
-        };
-      });
+          return {
+            data: jsonData,
+            total: total
+          };
+        })
+        .catch((err: HttpError) => {
+          console.log('catch Error', err.body);
+          const errorHandler = settings.errorHandler;
+          return Promise.reject(errorHandler(err));
+        });
     },
 
     /* getOne: (resource, params) =>
@@ -141,6 +183,7 @@ export default (
     },
 
     getMany: (resource, params) => {
+      resource = capitalize(resource);
       /* const query = {
         filter: JSON.stringify({ id: params.ids })
       }; */
@@ -337,3 +380,11 @@ export default (
       }))
   };
 };
+
+function capitalize(s: string): string {
+  return s[0].toUpperCase() + s.slice(1);
+}
+export interface includeRelations {
+  resource: string;
+  includes: string[];
+}

@@ -15,18 +15,19 @@ export class SafrsHttpError extends HttpError {
   }
 }
 
-export const safrsErrorHandler = (httpError: HttpError): HttpError => {
-  /* 
-Example Safrs Error message
-{
-  "errors": [
-    {
-      "title": "Request forbidden -- authorization will not help",
-      "detail": "",
-      "code": "403"
-    }
-  ]
-} */
+export const safrsErrorHandler: HttpErrorHandler = (
+  httpError: HttpError
+): HttpError => {
+  /* Example Safrs Error message
+  {
+    "errors": [
+      {
+        "title": "Request forbidden -- authorization will not help",
+        "detail": "",
+        "code": "403"
+      }
+    ]
+  } */
   interface err {
     title: string;
     detail: string;
@@ -40,7 +41,11 @@ Example Safrs Error message
       errors.errors[0].code
     );
   } else {
-    console.log('Unsopprted Http Error Body', httpError.body);
+    console.log('Unsopported Http Error Body', httpError.body);
     return httpError;
   }
 };
+
+export interface HttpErrorHandler {
+  (httpError: HttpError): HttpError;
+}

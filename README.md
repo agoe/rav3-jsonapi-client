@@ -28,9 +28,9 @@ Currently these actions will be supported:
 
 * `GET_LIST` 
 * `GET_ONE` 
-* `CREATE` todo
+* `CREATE`
 * `UPDATE`
-* `DELETE` tod
+* `DELETE` todo
 * `GET_MANY`
 * `GET_MANY_REFERENCE` todo
 
@@ -120,6 +120,18 @@ the settings:
   total: 'count'
 }
 ```
+## Jsonapi include
+is now supported
+Example:
+const includeRels = [ // in typescript interface includeRelations[] import {jsonapiClient, includeRelations} from "rav3-jsonapi-client";
+  { resource: 'Users', includes: ['addresses', 'companys'] },
+  { resource: 'Addresses', includes: ['users'] }
+];
+
+
+function App() {
+  const settings = { total: 'count',includeRelations: includeRels };
+
 
 ## License
 
