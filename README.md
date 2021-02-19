@@ -6,7 +6,7 @@ npm package hosted at [GitHub Package Registry](https://github.com/features/pack
 <!--
 [![NPM](https://img.shields.io/npm/v/rav3-jsonapi-client.svg)](https://github.com/agoe/rav3-jsonapi-client/packages/607376) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) -->
 
-this a fork from henvo/ra-jsonapi-client
+This Project uses code from henvo/ra-jsonapi-client
 ## Install
 
 ```bash
